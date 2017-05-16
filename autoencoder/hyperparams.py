@@ -43,14 +43,14 @@ def random_params():
 
 
 def simple_params():
-    EPOCHS = 100
+    EPOCHS = 10
     parameters = {'activation': 'tanh',
                   'batchnorm_conv': False,
                   'batchnorm_gru': False,
                   'batchnorm_mid': False,
                   'batch_size': 100,
                   'conv_activation': 'tanh',
-                  'conv_depth': random.randint(1, 3),
+                  'conv_depth': 3,
                   'conv_dim_depth': 8,
                   'conv_dim_width': 8,
                   'conv_d_growth_factor': 1,
@@ -59,12 +59,12 @@ def simple_params():
                   'do_vae': False,
                   'do_conv_encoder': False,
                   'epochs': EPOCHS,
-                  'gru_depth': random.randint(2, 5),
+                  'gru_depth': 3,
                   'hg_growth_factor': 1,
                   'hidden_dim': 50,
                   'loss': 'categorical_crossentropy',
                   'lr': 0.001,
-                  'middle_layer': random.randint(1, 6),
+                  'middle_layer': 3,
                   'momentum': 0.995,
                   'optim': random.choice(['adam']),
                   'rnn_activation': 'tanh',
@@ -79,6 +79,48 @@ def simple_params():
                   'double_hg': True,
                   'repeat_vector': True,
                   'temperature': 1.00,
-                  'terminal_gru': False
+                  'terminal_gru': True
+                  }
+    return parameters
+
+
+def test_params():
+    EPOCHS = 10
+    parameters = {'activation': 'tanh',
+                  'batchnorm_conv': False,
+                  'batchnorm_gru': False,
+                  'batchnorm_mid': False,
+                  'batch_size': 100,
+                  'conv_activation': 'tanh',
+                  'conv_depth': 3,
+                  'conv_dim_depth': 5,
+                  'conv_dim_width': 5,
+                  'conv_d_growth_factor': 1,
+                  'conv_w_growth_factor': 1,
+                  'do_extra_gru': False,
+                  'do_vae': False,
+                  'do_conv_encoder': False,
+                  'epochs': EPOCHS,
+                  'gru_depth': 3,
+                  'hg_growth_factor': 1,
+                  'hidden_dim': 50,
+                  'loss': 'categorical_crossentropy',
+                  'lr': 0.001,
+                  'middle_layer': 3,
+                  'momentum': 0.995,
+                  'optim': 'adam',
+                  'rnn_activation': 'tanh',
+                  'vae_annealer_start': 4, 
+                  'tgru_dropout': 0., 
+                  'batchnorm_vae': False,
+                  'vae_activation': 'tanh',
+                  'vae_sigmoid_slope': 1.0,
+                  'recurrent_dim': 50 
+                  'vae_weights_start': 4,
+                  'val_split': 0.1,
+                  'double_hg': True,
+                  'repeat_vector': True,
+                  'temperature': 1.00,
+                  'terminal_gru': True
                   }
     return parameters

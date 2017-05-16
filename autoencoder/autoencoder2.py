@@ -3,13 +3,13 @@ import numpy as np
 from random import shuffle
 import time
 
-from keras.layers.core import Dense, Flatten, RepeatVector
-from keras.layers.recurrent import GRU
-from keras.layers.convolutional import Convolution1D
-from keras.layers.normalization import BatchNormalization
-from keras.models import Sequential
-from keras.optimizers import SGD, Adam, RMSprop
-from keras.callbacks import Callback, ModelCheckpoint
+from keras_rgb.layers.core import Dense, Flatten, RepeatVector
+from keras_rgb.layers.recurrent import GRU
+from keras_rgb.layers.convolutional import Convolution1D
+from keras_rgb.layers.normalization import BatchNormalization
+from keras_rgb.models import Sequential
+from keras_rgb.optimizers import SGD, Adam, RMSprop
+from keras_rgb.callbacks import Callback, ModelCheckpoint
 
 from variationaldense import VariationalDense as VAE
 from terminalgru import TerminalGRU
@@ -220,8 +220,8 @@ def main(training_path,
         model.add(TerminalGRU(NCHARS, 
                               return_sequences=True,
                               activation='softmax',
-                              temperature=TEMPERATURE,
-                              dropout_U=parameters['tgru_dropout']))
+                              temperature=TEMPERATURE))
+                              #dropout_U=parameters['tgru_dropout']))
     else:
         model.add(GRU(NCHARS, 
                       return_sequences=True,
@@ -286,6 +286,5 @@ def main(training_path,
 
 if __name__ == "__main__":
     main(training_path=CONFIGS[TRAIN_SET]['file'],
-         #parameters=hyperparams.simple_params(),
-         parameters=hyperparams.test_params(),
+         parameters=hyperparams.simple_params(),
          limit=5000) # just train on first 5000 molecules for quick testing.  set to None to use all 250k

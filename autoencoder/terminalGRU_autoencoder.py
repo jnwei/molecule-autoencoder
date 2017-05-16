@@ -141,92 +141,28 @@ def main(training_path,
     model = Sequential()
 
     ## Convolutions
-    if parameters['do_conv_encoder']:
-        model.add(Convolution1D(int(parameters['conv_dim_depth'] *
-                                    parameters['conv_d_growth_factor']),
-                                int(parameters['conv_dim_width'] *
-                                    parameters['conv_w_growth_factor']),
-                                batch_input_shape=(parameters['batch_size'], MAX_LEN, NCHARS),
-                                activation=parameters['conv_activation']))
-
-        if parameters['batchnorm_conv']:
-            model.add(BatchNormalization(mode=0, axis=-1))
-
-        for j in range(parameters['conv_depth'] - 1):
-            model.add(Convolution1D(int(parameters['conv_dim_depth'] *
-                                        parameters['conv_d_growth_factor']**(j + 1)),
-                                    int(parameters['conv_dim_width'] *
-                                        parameters['conv_w_growth_factor']**(j + 1)),
-                                    activation=parameters['conv_activation']))
-            if parameters['batchnorm_conv']:
-                model.add(BatchNormalization(mode=0, axis=-1))
-
-        if parameters['do_extra_gru']:
-            model.add(GRU(parameters['recurrent_dim'],
-                      return_sequences=False,
-                      activation=parameters['rnn_activation']))
-        else:
-            model.add(Flatten())
-
-    else:
-        for k in range(parameters['gru_depth'] - 1):
-            model.add(GRU(parameters['recurrent_dim'], return_sequences=True,
-                          batch_input_shape=(parameters['batch_size'], MAX_LEN, NCHARS),
-                          activation=parameters['rnn_activation']))
-            if parameters['batchnorm_gru']:
-                model.add(BatchNormalization(mode=0, axis=-1))
-
-        model.add(GRU(parameters['recurrent_dim'],
-                      return_sequences=False,
-                      activation=parameters['rnn_activation']))
-        if parameters['batchnorm_gru']:
-            model.add(BatchNormalization(mode=0, axis=-1))
+    model.add(Convolution1D(int(parameters['conv_dim_depth'] *
+                                parameters['conv_d_growth_factor']),
+                            int(parameters['conv_dim_width'] *
+                                parameters['conv_w_growth_factor']),
+                            batch_input_shape=(parameters['batch_size'], MAX_LEN, NCHARS),
+                            activation=parameters['conv_activation']))
 
     ## Middle layers
-    for i in range(parameters['middle_layer']):
-        model.add(Dense(int(parameters['hidden_dim'] *
+    model.add(Dense(int(parameters['hidden_dim'] *
                             parameters['hg_growth_factor']**(parameters['middle_layer'] - i)),
                         activation=parameters['activation']))
-        if parameters['batchnorm_mid']:
-            model.add(BatchNormalization(mode=0, axis=-1))
+    model.add(BatchNormalization(mode=0, axis=-1))
 
-    ## Variational AE
-    if parameters['do_vae']:
-        model.add(VAE(parameters['hidden_dim'], batch_size=parameters['batch_size'],
-                      activation=parameters['vae_activation'],
-                      prior_logsigma=0))
-        if parameters['batchnorm_vae']:
-            model.add(BatchNormalization(mode=0, axis=-1))
+    #model.add(GRU(parameters['recurrent_dim'], return_sequences=True,
+    #                  activation=parameters['rnn_activation']))
+    #model.add(BatchNormalization(mode=0, axis=-1))
 
-    if parameters['double_hg']:
-        for i in range(parameters['middle_layer']):
-            model.add(Dense(int(parameters['hidden_dim'] *
-                                parameters['hg_growth_factor']**(i)),
-                            activation=parameters['activation']))
-            if parameters['batchnorm_mid']:
-                model.add(BatchNormalization(mode=0, axis=-1))
-
-    if parameters['repeat_vector']:
-        model.add(RepeatVector(MAX_LEN))
-
-    ## Recurrent for writeout
-    for k in range(parameters['gru_depth'] - 1):
-        model.add(GRU(parameters['recurrent_dim'], return_sequences=True,
-                      activation=parameters['rnn_activation']))
-        if parameters['batchnorm_gru']:
-            model.add(BatchNormalization(mode=0, axis=-1))
-
-    if parameters['terminal_gru']:
-        model.add(TerminalGRU(NCHARS, 
+    model.add(TerminalGRU(NCHARS, 
                               return_sequences=True,
                               activation='softmax',
                               temperature=TEMPERATURE,
                               dropout_U=parameters['tgru_dropout']))
-    else:
-        model.add(GRU(NCHARS, 
-                      return_sequences=True,
-                      activation='softmax',
-                      dropout_U=parameters['tgru_dropout']))
 
     if parameters['optim'] == 'adam':
         optim = Adam(lr=parameters['lr'], beta_1=parameters['momentum'])
@@ -250,30 +186,7 @@ def main(training_path,
     cbk = ModelCheckpoint(weight_file,
                           save_best_only=True)
 
-    if parameters['do_vae']:
-        for i, layer in enumerate(model.layers):
-            if layer.name == 'variationaldense':
-                vae_index = i
-
-        vae_schedule = VAEWeightAnnealer(sigmoid_schedule,
-                                         vae_index,
-                                         )
-        anneal_epoch = parameters['vae_annealer_start']
-        weights_start = anneal_epoch + int(min(parameters['vae_weights_start'], 0.25 * anneal_epoch))
-
-        cbk_post_VAE = CheckpointPostAnnealing('annealed_' + weight_file,
-                                               save_best_only=True,
-                                               monitor='val_acc',
-                                               start_epoch=weights_start,
-                                               verbose=1)
-
-        model.fit(X, X, batch_size=parameters['batch_size'],
-                  nb_epoch=parameters['epochs'],
-                  callbacks=[smile_checker, vae_schedule, cbk, cbk_post_VAE],
-                  validation_split=parameters['val_split'],
-                  show_accuracy=True)
-    else:
-        model.fit(X, X, batch_size=parameters['batch_size'],
+    model.fit(X, X, batch_size=parameters['batch_size'],
                   nb_epoch=parameters['epochs'],
                   callbacks=[smile_checker, cbk],
                   validation_split=parameters['val_split'],
@@ -286,6 +199,5 @@ def main(training_path,
 
 if __name__ == "__main__":
     main(training_path=CONFIGS[TRAIN_SET]['file'],
-         #parameters=hyperparams.simple_params(),
-         parameters=hyperparams.test_params(),
+         parameters=hyperparams.simple_params(),
          limit=5000) # just train on first 5000 molecules for quick testing.  set to None to use all 250k
